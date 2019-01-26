@@ -283,3 +283,18 @@ def hash_file(filename):
     return sha256_hash.hexdigest()
 
 
+def dump_vocab_tsv(config, vocab, embedding, filepath):
+    assert embedding.shape[0] == len(vocab)
+
+    vector_filepath = filepath.replace('.tsv', '.vector.tsv')
+    token_filepath  = filepath.replace('.tsv', '.token.tsv')
+
+    vector_file = open(vector_filepath, 'w')
+    token_file  = open(token_filepath,  'w')    
+
+    for i, vector in enumerate(embedding):
+        vector_file.write('\t'.join([str(v) for v in vector]) + '\n')
+        token_file.write(vocab[i] + '\n')
+
+    vector_file.close()
+    token_file.close()
