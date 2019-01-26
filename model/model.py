@@ -41,13 +41,6 @@ class Base(nn.Module):
         self.size_log.setLevel(config.CONFIG.LOG.MODEL.level)
         self.print_instance = 0
         
-
-        ########################################################################################
-        #  Saving model weights
-        ########################################################################################
-
-        self.best_model = (1e-5, self.cpu().state_dict())
-
         
     def __(self, tensor, name='', print_instance=False):
         if isinstance(tensor, list) or isinstance(tensor, tuple):
@@ -68,9 +61,9 @@ class Base(nn.Module):
             return self._name
 
         
-    def loss_trend(self, metric = None, total_count=10):
+    def loss_trend(self, metric = None, total_count=2):
         if not metric:
-            metric = self.test_loss
+            metric = self.best_model_criteria
             
         if len(metric) > 4:
             losses = metric[-4:]
@@ -220,7 +213,7 @@ class Model(Base):
 
         self.__build_stats__()
                         
-        self.best_model_criteria = self.accuracy
+        self.best_model_criteria = self.train_loss
 
         if config.CONFIG.cuda:
             self.cuda()
@@ -308,16 +301,16 @@ class Model(Base):
             self.log.info('= {} =loss:{}'.format(self.epoch, epoch_loss))
             self.log.info('- {} -accuracy:{}'.format(self.epoch, epoch_accuracy))
             
-        if len(self.best_model_criteria) > 1 and self.best_model[0] < self.best_model_criteria[-1]:
-            self.log.info('beat best ..')
-            self.best_model = (self.best_model_criteria[-1],
-                               self.cpu().state_dict())                             
-
-            self.save_best_model()
+        if len(self.best_model_criteria) > 1:
+            if self.best_model_criteria[-2] > self.best_model_criteria[-1]:
+                self.log.info('beat best ..')
+                self.best_model = (self.best_model_criteria[-1],
+                                   self.cpu().state_dict())                             
+                
+                self.save_best_model()
             
-            if self.config.CONFIG.cuda:
-                self.cuda()
-
+                if self.config.CONFIG.cuda:
+                    self.cuda()
         
         for m in self.metrics:
             m.write_to_file()
@@ -325,13 +318,14 @@ class Model(Base):
         if self.early_stopping:
             return self.loss_trend()
     
-    def do_predict(self, input_=None):
+    def do_predict(self, input_=None, max_len=10):
         if not input_:
             input_ = self.train_feed.nth_batch(
                 random.randint(0, self.train_feed.size),
                 1
             )
-            
+
+        
         output = self.forward(input_)
         output = output.max(1)[1].long()
         print(output.size())
