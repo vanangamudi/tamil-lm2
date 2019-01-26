@@ -33,7 +33,7 @@ from anikattu.tokenizer import word_tokenize
 from anikattu.tokenstring import TokenString
 from anikattu.datafeed import DataFeed, MultiplexedDataFeed
 from anikattu.dataset import NLPDataset as Dataset, NLPDatasetList as DatasetList
-from anikattu.utilz import tqdm, ListTable
+from anikattu.utilz import tqdm, ListTable, dump_vocab_tsv
 from anikattu.vocab import Vocab
 from anikattu.utilz import Var, LongVar, init_hidden, pad_seq
 from nltk.tokenize import WordPunctTokenizer
@@ -65,6 +65,12 @@ if __name__ == '__main__':
     train_parser = subparsers.add_parser('train', help='starts training')
     train_parser.add_argument('--train', default='train', dest='task')
     train_parser.add_argument('--mux', action='store_true', default=False, dest='mux')
+
+    dump_vocab_parser = subparsers.add_parser('dump-vocab',
+                                              help='dumps the vocabulary into two tsv file')
+    dump_vocab_parser.add_argument('--dump-vocab', default='dump-vocab', dest='task')
+    dump_vocab_parser.add_argument('--mux', action='store_true', default=False, dest='mux')
+
     
     predict_parser = subparsers.add_parser('predict',
                                 help='''starts a cli interface for running predictions 
@@ -99,7 +105,7 @@ if __name__ == '__main__':
     log.info('dataset size: {}'.format(len(dataset.trainset)))
     log.info('dataset[:10]: {}'.format(pformat(dataset.trainset[-1])))
 
-    log.info('vocab: {}'.format(pformat(dataset.output_vocab.freq_dict)))
+    #log.info('vocab: {}'.format(pformat(dataset.output_vocab.freq_dict)))
     ########################################################################################
     # load model snapshot data 
     ########################################################################################
@@ -125,7 +131,7 @@ if __name__ == '__main__':
                    test_feed = test_feed,)
     
     print('**** the model', model)
-    model.restore_and_save()
+    model.restore_checkpoint()
     
     if config.CONFIG.cuda:
         model = model.cuda()        
@@ -137,6 +143,12 @@ if __name__ == '__main__':
     
     if args.task == 'train':
         model.do_train()
+        
+    if args.task == 'dump-vocab':
+        dump_vocab_tsv(config,
+                   dataset.input_vocab,
+                   model.embed.weight.data.cpu().numpy(),
+                   config.ROOT_DIR + '/vocab.tsv')
         
     if args.task == 'predict':
         for i in range(10):
