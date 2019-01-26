@@ -56,7 +56,7 @@ def load_data(config,
     
     try:
         log.info('processing file: {}'.format(filename))
-        text_file = open(filename).readlines()[:10000]
+        text_file = open(filename).readlines()[:config.HPCONFIG.max_samples]
         for i, l in tqdm(enumerate(text_file),
                             desc='processing {}'.format(filename)):
 
