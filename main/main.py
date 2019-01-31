@@ -124,8 +124,6 @@ if __name__ == '__main__':
                    len(dataset.input_vocab),
                    len(dataset.output_vocab),
                    loss_function = loss_,
-                   accuracy_function = accuracy,
-                   #accuracy_function = partial(waccuracy, config=config),
                    dataset = dataset,
                    train_feed = train_feed,
                    test_feed = test_feed,)
