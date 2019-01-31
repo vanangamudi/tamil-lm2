@@ -172,7 +172,7 @@ def load_data(config,
     #pivot = int(len(samples) * config.CONFIG.split_ratio)
     #train_samples, test_samples = samples[:pivot], samples[pivot:]
     train_samples, test_samples = samples, []
-    input_vocab = Vocab(input_vocab, special_tokens=VOCAB)
+    input_vocab = Vocab(input_vocab, special_tokens=VOCAB, freq_threshold=50)
     output_vocab = Vocab(output_vocab)
     return Dataset(filename,
                    (train_samples, test_samples),
