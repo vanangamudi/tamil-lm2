@@ -14,10 +14,12 @@ class Vocab:
         self.freq_dict = vocab
         self.special_tokens = special_tokens
         if isinstance(freq_threshold, int):
-            vocab = {w:c for w, c in tqdm(vocab.items()) if c >= freq_threshold}
+            vocab = {w:c for w, c in tqdm(vocab.items(), 'Vocab:thresholding...')
+                     if c >= freq_threshold}
         else:
             l, h = freq_threshold
-            vocab = {w:c for w, c in tqdm(vocab.items()) if c <= l or c >= h}
+            vocab = {w:c for w, c in tqdm(vocab.items(), 'Vocab:thresholding...')
+                     if c <= l or c >= h}
 
         vocab = sorted(vocab.items(), key=lambda x: x[1], reverse=True)
 
