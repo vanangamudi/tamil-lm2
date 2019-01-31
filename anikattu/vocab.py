@@ -5,25 +5,28 @@ logging.basicConfig(format="%(levelname)-8s:%(filename)s.%(funcName)20s >>   %(m
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
+from tqdm import tqdm
+
 class Vocab:
-    def __init__(self, vocab, special_tokens=[], max_size=None, sort_key=None, freq_threshold=1, tokens=None):
+    def __init__(self, vocab, special_tokens=[], max_size=None, sort=True, sort_key=None, freq_threshold=1, tokens=None):
 
         log.info('Constructiong vocabuluary object...')
         self.freq_dict = vocab
         self.special_tokens = special_tokens
         if isinstance(freq_threshold, int):
-            vocab = {w:c for w, c in vocab.items() if c >= freq_threshold}
+            vocab = {w:c for w, c in tqdm(vocab.items()) if c >= freq_threshold}
         else:
             l, h = freq_threshold
-            vocab = {w:c for w, c in vocab.items() if c <= l or c >= h}
+            vocab = {w:c for w, c in tqdm(vocab.items()) if c <= l or c >= h}
 
         vocab = sorted(vocab.items(), key=lambda x: x[1], reverse=True)
 
         if max_size: vocab = vocab[:max_size]
+        
         vocab = [ w for w,c in vocab]
         index2word = vocab
         if tokens  :  index2word = tokens
-        if sort_key:
+        if sort:
             index2word = sorted(index2word, key=sort_key)
 
         self.index2word = special_tokens + index2word
@@ -38,7 +41,7 @@ class Vocab:
             try:
                 return self.word2index[key]
             except:
-                log.exception('==========')
+                #log.exception('==========')
                 return self.word2index['UNK']
         else: #type(key) == int:
             return self.index2word[key]
