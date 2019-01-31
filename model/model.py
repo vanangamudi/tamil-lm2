@@ -61,7 +61,7 @@ class Base(nn.Module):
             return self._name
 
         
-    def loss_trend(self, metric = None, total_count=2):
+    def loss_trend(self, metric = None, total_count=10):
         if not metric:
             metric = self.best_model_criteria
             
@@ -89,7 +89,7 @@ class Base(nn.Module):
                 f = '{}/{}_best_model_accuracy.txt'.format(self.config.ROOT_DIR, self.name())
                 if os.path.isfile(f):
                     self.best_model = (float(open(f).read().strip()), self.cpu().state_dict())
-                    self.log.info('loaded last best accuracy: {}'.format(self.best_model[0]))
+                    self.log.info('loaded last best metric: {}'.format(self.best_model[0]))
             except:
                 log.exception('no last best model')
             
@@ -107,13 +107,14 @@ class Base(nn.Module):
             f.write(str(self.best_model[0]))
 
         if self.save_model_weights:
-            self.log.info('saving the last best model with accuracy {}...'
+            self.log.info('saving the last best model with metric {}...'
                           .format(self.best_model[0]))
-
+            """
             torch.save(self.best_model[1],
                        '{}/weights/{:0.4f}.{}'.format(self.config.ROOT_DIR,
                                                       self.best_model[0],
-                                                      'pth'))
+            'pth'))
+            """
             
             torch.save(self.best_model[1],
                        '{}/weights/{}.{}'.format(self.config.ROOT_DIR,
@@ -133,26 +134,8 @@ class Base(nn.Module):
         
         self.test_loss  = Averager(self.config,
                                    filename = '{}.{}'.format(self.mfile_prefix,   'test_loss'))
-        self.accuracy   = Averager(self.config,
-                                   filename = '{}.{}'.format(self.mfile_prefix,  'accuracy'))
         
-        self.metrics = [self.train_loss, self.test_loss, self.accuracy]
-        # optional metrics
-        if getattr(self, 'f1score_function'):
-            self.tp = Averager(self.config, filename = '{}.{}'.format(self.mfile_prefix,   'tp'))
-            self.fp = Averager(self.config, filename = '{}.{}'.format(self.mfile_prefix,  'fp'))
-            self.fn = Averager(self.config, filename = '{}.{}'.format(self.mfile_prefix,  'fn'))
-            self.tn = Averager(self.config, filename = '{}.{}'.format(self.mfile_prefix,  'tn'))
-            
-            self.precision = Averager(self.config,
-                                      filename = '{}.{}'.format(self.mfile_prefix,  'precision'))
-            self.recall    = Averager(self.config,
-                                      filename = '{}.{}'.format(self.mfile_prefix,  'recall'))
-            self.f1score   = Averager(self.config,
-                                      filename = '{}.{}'.format(self.mfile_prefix,  'f1score'))
-          
-            self.metrics += [self.tp, self.fp, self.fn, self.tn,
-                             self.precision, self.recall, self.f1score]
+        self.metrics = [self.train_loss, self.test_loss]
 
 class Model(Base):
     def __init__(self, config, name,
@@ -166,7 +149,6 @@ class Model(Base):
 
                  # loss function
                  loss_function,
-                 accuracy_function=None,
 
                  f1score_function=None,
                  save_model_weights=True,
@@ -184,18 +166,12 @@ class Model(Base):
         self.embed_dim = config.HPCONFIG.embed_dim
 
         self.embed = nn.Embedding(self.vocab_size, self.embed_dim)
-        self.encode = nn.LSTM(self.embed_dim, self.hidden_dim,
-                              bidirectional=True, num_layers=config.HPCONFIG.num_layers)
+        self.encode = nn.LSTMCell(self.embed_dim, self.hidden_dim)
         
-        self.classify = nn.Linear(2*self.hidden_dim, self.vocab_size)
+        self.classify = nn.Linear(self.hidden_dim, self.vocab_size)
 
         self.loss_function = loss_function if loss_function else nn.NLLLoss()
         
-        if accuracy_function :
-            self.accuracy_function = accuracy_function
-        else:
-            self.accuracy_function = lambda *x, **xx: 1 / loss_function(*x, **xx)
-
         self.optimizer = optimizer if optimizer else optim.SGD(self.parameters(),
                                                                lr=0.01, momentum=0.1)
         
@@ -223,31 +199,24 @@ class Model(Base):
         self.save_best_model()
         
     def init_hidden(self, batch_size):
-        ret = torch.zeros(2, batch_size, self.hidden_dim)
-        if config.HPCONFIG().cuda: ret = ret.cuda()
-        return Variable(ret)
+        hidden  = Variable(torch.zeros(batch_size, self.hidden_dim))
+        if config.CONFIG.cuda:
+            hidden  = hidden.cuda()
+        return hidden
+
     
-    def forward(self, input_):
-        ids, (seq,), _ = input_
-        if seq.dim() == 1: seq = seq.unsqueeze(0)
-            
-        batch_size, seq_size = seq.size()
-        seq_emb = F.tanh(self.embed(seq))
-        seq_emb = seq_emb.transpose(1, 0)
-        pad_mask = (seq > 0).float()
-        
-        states, cell_state = self.encode(seq_emb)
-        
-        logits = self.classify(states[-1])
-        
-        return F.log_softmax(logits, dim=-1)
+    def forward(self, prev_output, state):
+        prev_output_emb = self.__( self.embed(prev_output), 'prev_output_emb' )
+        state, cell_state = self.encode(prev_output_emb, state) 
+        logits = self.classify(state)        
+        return F.log_softmax(logits, dim=-1), cell_state
 
    
     def do_train(self):
         for epoch in range(self.epochs):
             self.log.critical('memory consumed : {}'.format(memory_consumed()))            
             self.epoch = epoch
-            if epoch % max(1, (self.checkpoint - 1)) == 0:
+            if epoch and epoch % max(1, (self.checkpoint - 1)) == 0:
                 #self.do_predict()
                 if self.do_validate() == FLAGS.STOP_TRAINING:
                     self.log.info('loss trend suggests to stop training')
@@ -258,11 +227,21 @@ class Model(Base):
             for j in tqdm(range(self.train_feed.num_batch), desc='Trainer.{}'.format(self.name())):
                 self.optimizer.zero_grad()
                 input_ = self.train_feed.next_batch()
-                idxs, inputs, targets = input_
+                idxs, seq, targets = input_
 
-                output = self.forward(input_)
-                loss   = self.loss_function(output, input_)
-                #print(loss.data.cpu().numpy())
+                seq_size, batch_size = seq.size()
+                pad_mask = (seq > 0).float()
+
+                loss = 0
+                outputs = []
+                output = self.__(seq[0], 'output')
+                state = self.__(self.init_hidden(batch_size), 'init_hidden')
+                for index in range(seq_size):
+                    output, state = self.__(self.forward(output, state), 'output, state')
+                    loss   += self.loss_function(output, targets[index+1])
+                    output = self.__(output.max(1)[1], 'output')
+                    outputs.append(output)
+                    
                 losses.append(loss)
                 loss.backward()
                 self.optimizer.step()
@@ -286,20 +265,14 @@ class Model(Base):
 
                 output   = self.forward(input_)
                 loss     = self.loss_function(output, input_)
-                accuracy = self.accuracy_function(output, input_)
                 
                 losses.append(loss)
-                accuracies.append(accuracy)
 
             epoch_loss = torch.stack(losses).mean()
-            epoch_accuracy = torch.stack(accuracies).mean()
 
             self.test_loss.append(epoch_loss.data.item())
-            self.accuracy.append(epoch_accuracy.data.item())
-                #print('====', self.test_loss, self.accuracy)
 
             self.log.info('= {} =loss:{}'.format(self.epoch, epoch_loss))
-            self.log.info('- {} -accuracy:{}'.format(self.epoch, epoch_accuracy))
             
         if len(self.best_model_criteria) > 1:
             if self.best_model_criteria[-2] > self.best_model_criteria[-1]:
