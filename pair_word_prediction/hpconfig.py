@@ -11,7 +11,7 @@ class CONFIG(Base):
 
     dataset = 'news'
     window_size = 2
-    dataset_path = '../dataset/lm_lengthsorted_bpe30K.txt'
+    dataset_path = '../dataset/lm_lengthsorted.txt'
     max_samples = 1000000
     trainset_size = 1
     hidden_dim = 100

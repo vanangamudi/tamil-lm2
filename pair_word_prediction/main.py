@@ -98,9 +98,9 @@ if __name__ == '__main__':
     if config.CONFIG.flush:
         log.info('flushing...')
         dataset = load_data(config, filename=config.HPCONFIG.dataset_path)
-        #pickle.dump(dataset, open('{}__cache.pkl'.format(SELF_NAME), 'wb'))
+        pickle.dump(dataset, open('{}/{}__cache.pkl'.format(ROOT_DIR, SELF_NAME), 'wb'))
     else:
-        dataset = pickle.load(open('{}__cache.pkl'.format(SELF_NAME), 'rb'))
+        dataset = pickle.load(open('{}/{}__cache.pkl'.format(ROOT_DIR, SELF_NAME), 'rb'))
         
     log.info('dataset size: {}'.format(len(dataset.trainset)))
     for i in range(10):
@@ -117,7 +117,7 @@ if __name__ == '__main__':
                               batch_size = config.CONFIG.batch_size)
     
     
-    loss_ = partial(loss, loss_function=nn.NLLLoss())
+    loss_ = partial(loss, loss_function=nn.NLLLoss(reduction='sum'))
     test_feed      = DataFeed(SELF_NAME, dataset.testset, batchop=_batchop, batch_size=config.CONFIG.batch_size)
     
     model =  Model(config, 'Model',
