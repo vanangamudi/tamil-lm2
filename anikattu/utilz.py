@@ -290,8 +290,9 @@ def dump_vocab_tsv(config, vocab, embedding, filepath):
     token_filepath  = filepath.replace('.tsv', '.token.tsv')
 
     vector_file = open(vector_filepath, 'w')
-    token_file  = open(token_filepath,  'w')    
-
+    token_file  = open(token_filepath,  'w')
+    
+    token_file.write('Token' + '\n')
     for i, vector in enumerate(embedding):
         vector_file.write('\t'.join([str(v) for v in vector]) + '\n')
         token_file.write(vocab[i] + '\n')
