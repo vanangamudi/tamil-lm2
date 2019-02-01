@@ -10,7 +10,7 @@ class Base(metaclass=ConfigMeta):
 class CONFIG(Base):
 
     dataset = 'news'
-    window_size = 2
+    window_size = 1
     dataset_path = '../dataset/lm_lengthsorted.txt'
     max_samples = 1000000
     trainset_size = 1
@@ -18,6 +18,6 @@ class CONFIG(Base):
     embed_dim = 300
     num_layers = 1
     
-    LR = 0.001
+    LR = 0.01
     MOMENTUM=0.1
     ACTIVATION = 'softmax'
