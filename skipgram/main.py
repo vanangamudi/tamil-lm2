@@ -53,7 +53,7 @@ from matplotlib import pyplot as plt
 plt.style.use('ggplot')
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='MACNet variant 2')
+    parser = argparse.ArgumentParser(description='SkipGram model for training tamil language model')
     parser.add_argument('-p','--hpconfig',
                         help='path to the hyperparameters config file',
                         default='hpconfig.py', dest='hpconfig')
@@ -98,7 +98,7 @@ if __name__ == '__main__':
     if config.CONFIG.flush:
         log.info('flushing...')
         dataset = load_data(config, filename=config.HPCONFIG.dataset_path)
-        pickle.dump(dataset, open('{}/{}__cache.pkl'.format(ROOT_DIR, SELF_NAME), 'wb'))
+        #pickle.dump(dataset, open('{}/{}__cache.pkl'.format(ROOT_DIR, SELF_NAME), 'wb'))
     else:
         dataset = pickle.load(open('{}/{}__cache.pkl'.format(ROOT_DIR, SELF_NAME), 'rb'))
 
@@ -141,7 +141,7 @@ if __name__ == '__main__':
 
     
     if args.task == 'train':
-        model.do_train2()
+        model.do_train()
         
     if args.task == 'dump-vocab':
         dump_vocab_tsv(config,

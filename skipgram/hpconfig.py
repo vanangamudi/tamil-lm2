@@ -10,9 +10,10 @@ class Base(metaclass=ConfigMeta):
 class CONFIG(Base):
 
     dataset = 'news'
-    window_size = 1
+    window_size = 3
     dataset_path = '../dataset/lm_lengthsorted.txt'
-    max_samples = 1000000
+    max_samples = 10000000
+    freq_threshold = 100
     trainset_size = 1
     hidden_dim = 100
     embed_dim = 300
