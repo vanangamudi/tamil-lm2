@@ -60,3 +60,9 @@ class Vocab:
             })
         
         self.index2word += words
+
+    def write_vocab_to_file(self, filepath):
+        lines = ['{}|{}'.format(k, v) for k, v in self.freq_dict.items()]
+        with open(filepath, 'w') as f:
+            f.write('\n'.join(lines))
+        
