@@ -17,13 +17,13 @@ class CONFIG(Base):
     cuda = True
     multi_gpu = True
     tqdm = True
-    flush = False
-    batch_size = 1000
+    flush = True
+    batch_size = 100
     plot_metrics = True
     
     CHECKPOINT = 1
-    EPOCHS = 50
-    EONS=1
+    EPOCHS = 500
+    EONS=2
     ACCURACY_THRESHOLD=0.9
     ACCURACY_IMPROVEMENT_THRESHOLD=0.05
     
