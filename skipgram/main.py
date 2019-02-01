@@ -104,7 +104,8 @@ if __name__ == '__main__':
 
         
     log.info('dataset size: {}'.format(len(dataset.trainset)))
-    log.info('dataset[:10]: {}'.format(pformat(dataset.trainset[-1])))
+    for i in range(10):
+        log.info('random sample: {}'.format(pformat(random.choice(dataset.trainset))))
 
     #log.info('vocab: {}'.format(pformat(dataset.output_vocab.freq_dict)))
     ########################################################################################
@@ -140,7 +141,7 @@ if __name__ == '__main__':
 
     
     if args.task == 'train':
-        model.do_train()
+        model.do_train2()
         
     if args.task == 'dump-vocab':
         dump_vocab_tsv(config,
