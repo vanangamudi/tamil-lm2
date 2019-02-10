@@ -1,9 +1,11 @@
 # தமிழ் மொழி ஒப்பு - tamil-lm
 மொழியொப்பேற்றம், வெறும் செய்திதாள் கட்டுரைகளிலிருந்து, கணினி எப்படி சொற்களுக்கு இருக்கும் தொடர்பை கண்டுபிடிக்கிறது.
+
 Language modelling based on skip-grams over tamil news dataset
 
 ## [காட்சிப்பொருள் - Demo](http://w2v.kaatchi.cheyyarivu.org/)
 இந்த தளத்தில் சென்று பார்க்க, தொடர்புடைய சொற்கள் எவையவை, தொடர்பில்லாத சொற்கள் எவையவை என்று கணியொப்பே கண்டறிந்து காட்டுகிறது புரியும்.
+
 Please go to the [link](http://w2v.kaatchi.cheyyarivu.org/) for the demo.
 
 ## தரவுக்கணம் - Dataset
