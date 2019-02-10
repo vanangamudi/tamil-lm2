@@ -34,7 +34,10 @@ Use TSNE projection and let it run for more than 400 iterations. You can see the
 
 ## Training
     $ python main.py train
-  
+    
+## Sister Projects
+[Malayalam - Vaaku2Vec](https://github.com/adamshamsudeen/Vaaku2Vec/)
+
 ## Thanks
 - [Abin Simon](github.com/meain) for setting up the UI.
 - [Adam Shamshudeen](github.com/adamshamsudeen) for setting up the server side.
