@@ -9,9 +9,11 @@ Language modelling based on skip-grams over tamil news dataset
 Please go to the [link](http://w2v.kaatchi.cheyyarivu.org/) for the demo.
 
 ## தரவுக்கணம் - Dataset
+செய்திதாள் கட்டுரைளை படியெடுத்து, கொஞ்சம் சுத்தஞ்செய்து ஆக்கப்பட்ட தரவுக்கணம் ஒரு விரைவில் வெளியிடப்படும். சுத்தஞ்செய்யும் முறைகளும், விளக்கப்படும்.
 The data is scraped from tamil news websites. The dataset will be made available soon. 
 
-## Models
+## ஒப்புகள் - Models
+இச்சட்டியில், மொத்தம் மூன்று ஒப்புகள் உள்ளன, எனினும், skipgram நன்கு செயல்படுகிறது. 
 Though there are three models available in the repo, skipgram works well.
 
 ## Model weights.
