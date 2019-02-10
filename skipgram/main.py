@@ -33,7 +33,7 @@ from anikattu.tokenizer import word_tokenize
 from anikattu.tokenstring import TokenString
 from anikattu.datafeed import DataFeed, MultiplexedDataFeed
 from anikattu.dataset import NLPDataset as Dataset, NLPDatasetList as DatasetList
-from anikattu.utilz import tqdm, ListTable, dump_vocab_tsv
+from anikattu.utilz import tqdm, ListTable, dump_vocab_tsv, dump_cosine_similarity_tsv
 from anikattu.vocab import Vocab
 from anikattu.utilz import Var, LongVar, init_hidden, pad_seq
 from nltk.tokenize import WordPunctTokenizer
@@ -69,7 +69,12 @@ if __name__ == '__main__':
     dump_vocab_parser = subparsers.add_parser('dump-vocab',
                                               help='dumps the vocabulary into two tsv file')
     dump_vocab_parser.add_argument('--dump-vocab', default='dump-vocab', dest='task')
-    dump_vocab_parser.add_argument('--mux', action='store_true', default=False, dest='mux')
+
+    dump_cosine_similarity_parser = subparsers.add_parser('dump-cosine-similarity',
+                                                          help='dumps the cosine-similarity into two tsv file')
+    dump_cosine_similarity_parser.add_argument('--dump-cosine-similarity',
+                                               default='dump-cosine-similarity',
+                                               dest='task')
 
     
     predict_parser = subparsers.add_parser('predict',
@@ -148,6 +153,14 @@ if __name__ == '__main__':
                    dataset.input_vocab,
                    model.embed.weight.data.cpu().numpy(),
                    config.ROOT_DIR + '/vocab.tsv')
+
+
+    if args.task == 'dump-cosine-similarity':
+        dump_cosine_similarity_tsv(config,
+                   dataset.input_vocab,
+                   model.embed.weight.data.cpu(),
+                   config.ROOT_DIR + '/cosine_similarity.tsv')
+        
         
     if args.task == 'predict':
         for i in range(10):
