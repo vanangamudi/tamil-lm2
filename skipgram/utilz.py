@@ -98,7 +98,7 @@ def load_data(config,
                       freq_threshold = int(freq_threshold))
 
         if config.CONFIG.write_vocab_to_file:
-            vocab.write_vocab_to_file(config.ROOT_DIR + '/vocab.csv')
+            vocab.write_to_file(config.ROOT_DIR + '/vocab.csv')
         
         for i, sentence in tqdm(enumerate(sentences),
                          desc='processing sentences'):
