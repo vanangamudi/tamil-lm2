@@ -8,7 +8,9 @@ log.setLevel(logging.INFO)
 from tqdm import tqdm
 
 class Vocab:
-    def __init__(self, vocab, special_tokens=[], max_size=None, sort=True, sort_key=None, freq_threshold=1, tokens=None):
+    def __init__(self, vocab, special_tokens=[],
+                 max_size=None, sort=True, sort_key=None,
+                 freq_threshold=1, tokens=None):
 
         log.info('Constructiong vocabuluary object...')
         self.freq_dict = vocab
@@ -61,8 +63,22 @@ class Vocab:
         
         self.index2word += words
 
-    def write_vocab_to_file(self, filepath):
+    def write_to_file(self, filepath):
         lines = ['{}|{}'.format(k, v) for k, v in self.freq_dict.items()]
-        with open(filepath, 'w') as f:
+        with open(filepath + '.freq_dict.csv', 'w') as f:
             f.write('\n'.join(lines))
+
+        with open(filepath + '.index2word.csv', 'w') as f:
+            f.write('\n'.join(self.index2word))
+
+    def load_from_file(self, filepath):
+        self.freq_dict = {}
+        with open(filepath + '.freq_dict.csv') as f:
+            for line in f.readlines():
+                word, freq = line.strip().split('|')
+                self.freq_dict[word] = int(freq)
+
+        with open(filepath + '.index2word.csv') as f:
+            self.index2word = f.read().splitlines()
+
         
