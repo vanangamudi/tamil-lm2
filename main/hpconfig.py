@@ -11,11 +11,11 @@ class CONFIG(Base):
 
     dataset = 'news'
     
-    dataset_path = '../dataset/lm_lengthsorted_bpe30K.txt'
+    dataset_path = '../dataset/lm_lengthsorted.txt'
     max_samples = 100000
     trainset_size = 1
     hidden_dim = 100
-    embed_dim = 50
+    embed_dim = 100
     num_layers = 1
     
     LR = 0.001

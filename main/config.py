@@ -17,9 +17,9 @@ class CONFIG(Base):
     cuda = True
     multi_gpu = True
     tqdm = True
-    flush = True
-    batch_size = 25
-    plot_metrics = True
+    flush = False
+    batch_size = 5
+    plot_metrics = False
     
     CHECKPOINT = 1
     EPOCHS = 50
