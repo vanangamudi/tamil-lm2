@@ -21,7 +21,7 @@ Though there are three models available in the repo, skipgram works well.
 The embedding vectors and corresponding tokens can be downloaded from [vaaku2vec.zip](https://drive.google.com/open?id=1G3FM2paj9JaX-zsg0yDWxAHGrlxnjROy)
 
 #### How to visualize?
-You can upload the vocab.vectors.tsv and vocab.tokens.tsv in [TensorFlow Projector](projector.tensorflow.org) to visualize them. 
+You can upload the vocab.vectors.tsv and vocab.tokens.tsv in [TensorFlow Projector](https://projector.tensorflow.org) to visualize them. 
 
  ![](assets/images/upload_data.png)
  ![](assets/images/upload_vector.png)
@@ -39,9 +39,9 @@ Use TSNE projection and let it run for more than 400 iterations. You can see the
 [Malayalam - Vaaku2Vec](https://github.com/adamshamsudeen/Vaaku2Vec/)
 
 ## Thanks
-- [Abin Simon](github.com/meain) for setting up the UI.
-- [Adam Shamshudeen](github.com/adamshamsudeen) for setting up the server side.
-- [Malaikannan Sankarasubbu](github.com/malaikannan) For letting me work on this full time.
-- [Sebastian Ruder](github.com/sebastianruder) For helping me learn word embeddings years ago.
+- [Abin Simon](https://github.com/meain) for setting up the UI.
+- [Adam Shamshudeen](https://github.com/adamshamsudeen) for setting up the server side.
+- [Malaikannan Sankarasubbu](https://github.com/malaikannan) For letting me work on this full time.
+- [Sebastian Ruder](https://github.com/sebastianruder) For helping me learn word embeddings years ago.
 
 And all the good people who write blogs everyday to better the humanity.
