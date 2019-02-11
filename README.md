@@ -41,7 +41,7 @@ Use TSNE projection and let it run for more than 400 iterations. You can see the
 ## Thanks
 - [Abin Simon](github.com/meain) for setting up the UI.
 - [Adam Shamshudeen](github.com/adamshamsudeen) for setting up the server side.
-- [Malaikannan Sankarasubbu](github.com/malaikannan) For letting me work on this full time.
+- [Malaikannan Sankarasubbu](github.com/malaikannan) For letting me work on this.
 - [Sebastian Ruder](github.com/sebastianruder) For helping me learn word embeddings years ago.
 
 And all the good people who write blogs everyday to better the humanity.
