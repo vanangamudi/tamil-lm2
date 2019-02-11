@@ -21,7 +21,7 @@ Though there are three models available in the repo, skipgram works well.
 The embedding vectors and corresponding tokens can be downloaded from [vaaku2vec.zip](https://drive.google.com/open?id=1G3FM2paj9JaX-zsg0yDWxAHGrlxnjROy)
 
 #### How to visualize?
-You can upload the vocab.vectors.tsv and vocab.tokens.tsv in [TensorFlow Projector](projector.tensorflow.org) to visualize them. 
+You can upload the vocab.vectors.tsv and vocab.tokens.tsv in [TensorFlow Projector](https://projector.tensorflow.org) to visualize them. 
 
  ![](assets/images/upload_data.png)
  ![](assets/images/upload_vector.png)
