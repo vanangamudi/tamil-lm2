@@ -12,7 +12,7 @@ class CONFIG(Base):
     dataset = 'news'
     
     dataset_path = '../dataset/lm_lengthsorted.txt'
-    max_samples = 100000
+    max_samples = 1000000000
     trainset_size = 1
     hidden_dim = 100
     embed_dim = 100

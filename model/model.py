@@ -200,17 +200,20 @@ class Model(Base):
         
     def init_hidden(self, batch_size):
         hidden  = Variable(torch.zeros(batch_size, self.hidden_dim))
+        cell  = Variable(torch.zeros(batch_size, self.hidden_dim))
         if config.CONFIG.cuda:
             hidden  = hidden.cuda()
-        return hidden
+            cell    = cell.cuda()
+            
+        return hidden, cell
 
     
     def forward(self, prev_output, state):
         prev_output_emb = self.__( self.embed(prev_output), 'prev_output_emb' )
-        state, cell_state = self.encode(prev_output_emb, state) 
-        logits = self.classify(state)        
-        return F.log_softmax(logits, dim=-1), cell_state
-
+        hidden, cell_state = self.encode(prev_output_emb, state) 
+        logits = self.classify(hidden)        
+        return F.log_softmax(logits, dim=-1), (hidden, cell_state)
+    
    
     def do_train(self):
         for epoch in range(self.epochs):
@@ -236,7 +239,7 @@ class Model(Base):
                 outputs = []
                 output = self.__(seq[0], 'output')
                 state = self.__(self.init_hidden(batch_size), 'init_hidden')
-                for index in range(seq_size):
+                for index in range(seq_size - 1):
                     output, state = self.__(self.forward(output, state), 'output, state')
                     loss   += self.loss_function(output, targets[index+1])
                     output = self.__(output.max(1)[1], 'output')
@@ -261,15 +264,24 @@ class Model(Base):
             losses, accuracies = [], []
             for j in tqdm(range(self.test_feed.num_batch), desc='Tester.{}'.format(self.name())):
                 input_ = self.test_feed.next_batch()
-                idxs, inputs, targets = input_
+                idxs, seq, targets = input_
 
-                output   = self.forward(input_)
-                loss     = self.loss_function(output, input_)
-                
+                seq_size, batch_size = seq.size()
+                pad_mask = (seq > 0).float()
+
+                loss = 0
+                outputs = []
+                output = self.__(seq[0], 'output')
+                state = self.__(self.init_hidden(batch_size), 'init_hidden')
+                for index in range(seq_size - 1):
+                    output, state = self.__(self.forward(output, state), 'output, state')
+                    loss   += self.loss_function(output, targets[index+1])
+                    output = self.__(output.max(1)[1], 'output')
+                    outputs.append(output)
+                    
                 losses.append(loss)
-
+                
             epoch_loss = torch.stack(losses).mean()
-
             self.test_loss.append(epoch_loss.data.item())
 
             self.log.info('= {} =loss:{}'.format(self.epoch, epoch_loss))
@@ -293,21 +305,28 @@ class Model(Base):
     
     def do_predict(self, input_=None, max_len=10):
         if not input_:
-            input_ = self.train_feed.nth_batch(
-                random.randint(0, self.train_feed.size),
+            input_ = self.test_feed.nth_batch(
+                random.randint(0, self.test_feed.size),
                 1
             )
 
-        
-        output = self.forward(input_)
-        output = output.max(1)[1].long()
+        print(input_)
+        ids, seq, label = input_
+        seq_size, batch_size = seq.size()
+                    
+        outputs = []
+        output = self.__(seq[0], 'output')
+        state = self.__(self.init_hidden(batch_size), 'init_hidden')
+        for index in range(max_len - 1):
+            output, state = self.__(self.forward(output, state), 'output, state')
+            output = self.__(output.max(1)[1], 'output')
+            outputs.append(output)
+
+        outputs = torch.stack(outputs)
         print(output.size())
 
-        ids, (sequence, ), (label) = input_
-        print(' '.join([self.dataset.input_vocab[i.data[0]] for i in sequence[0]]).replace('@@ ', ''))
-        print(self.dataset.output_vocab[output.data[0]],
-              ' ==? ',
-              self.dataset.output_vocab[label.data[0]] )
+        print(self.dataset.input_vocab[seq[0]])
+        print(' '.join([self.dataset.input_vocab[i.data[0]] for i in outputs]).replace('@@ ', ''))
         
         return True
 
