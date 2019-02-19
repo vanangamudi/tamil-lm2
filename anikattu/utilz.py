@@ -325,3 +325,8 @@ def dump_cosine_similarity_tsv(config, vocab, embedding, filepath, count=100):
     
     similar_file.close()
     dissimilar_file.close()
+
+def conv2d_output_size(W, H, F=3, S=1, P=1):
+    W2 = (W - F + 2*P)//S + 1
+    H2 = (H - F + 2*P)//S + 1
+    return (W2, H2)
