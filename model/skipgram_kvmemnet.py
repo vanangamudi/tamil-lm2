@@ -58,6 +58,42 @@ class Encoder(Base):
         return output
 
 
+class ConvEncoder(Base):
+    def __init__(self, config, name,
+                 input_size):
+        
+        super().__init__(config, name)
+        self.input_size = input_size
+
+        self.embed_dim = self.config.HPCONFIG.embed_dim
+        self.hidden_dim = self.config.HPCONFIG.hidden_dim
+        
+        self.embed  = nn.Embedding(self.input_size, self.embed_dim, padding_idx=0)
+        self.convolve = nn.Conv1d(self.embed_dim,
+                                  self.config.HPCONFIG.output_channels[0],
+                                  
+                                  self.config.HPCONFIG.kernel_size[0],
+                                  padding = 1)
+
+    def init_hidden(self, batch_size):
+        hidden_state = Var(self.config, torch.zeros(1, batch_size, self.hidden_dim))
+        cell_state   = Var(self.config, torch.zeros(1, batch_size, self.hidden_dim))
+
+        if self.config.CONFIG.cuda:
+            hidden_state = hidden_state.cuda()
+            cell_state   = cell_state.cuda()
+
+        return hidden_state, cell_state
+        
+    def forward(self, prev_char):
+        emb = self.__( self.embed(prev_char).transpose(1, 2), 'emb' )
+        output = self.__( self.convolve(emb) , 'output')
+
+        output = self.__( output.max(dim=-1)[0], 'output')
+        
+        return output
+    
+
 class Decoder(Base):
     def __init__(self, config, name,
                  input_size,
@@ -120,7 +156,7 @@ class Model(Base):
         self.keys   = nn.Parameter(torch.rand([self.kv_size, self.hidden_dim]))
         self.values = nn.Parameter(torch.rand([self.kv_size, self.hidden_dim]))
         
-        self.encode = Encoder(self.config, name + '.encoder' , input_vocab_size)
+        self.encode = ConvEncoder(self.config, name + '.encoder' , input_vocab_size)
         self.decode = Decoder(self.config, name + '.decoder', input_vocab_size, output_vocab_size)
 
         self.loss_function = loss_function if loss_function else nn.NLLLoss()
@@ -182,8 +218,8 @@ class Model(Base):
                 encoded_info = self.__(self.encode(word), 'encoded_info')
 
                 keys = self.__( self.keys.transpose(0, 1), 'keys')
-                keys = self.__( keys.expand([encoded_info.size(1), *keys.size()]), 'keys')
-                inner_product = self.__(torch.bmm(encoded_info[-1].unsqueeze(1),  #final state
+                keys = self.__( keys.expand([encoded_info.size(0), *keys.size()]), 'keys')
+                inner_product = self.__(torch.bmm(encoded_info.unsqueeze(1),  #final state
                                                   keys),
                                         'inner_product')
 
@@ -196,7 +232,7 @@ class Model(Base):
                 
                 state = self.__(self.init_hidden(targets.size(1)), 'init-hidden')
                 state = self.__( (weighted_sum, state[1].squeeze(0)), 'decoder initial state')
-                prev_output = self.__(self.sos_token.expand([encoded_info.size(1)]),
+                prev_output = self.__(self.sos_token.expand([encoded_info.size(0)]),
                                       'sos_token')
                 
                 for i in range(targets.size(0)):

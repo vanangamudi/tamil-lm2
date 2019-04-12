@@ -17,7 +17,11 @@ class CONFIG(Base):
     trainset_size = 1
     hidden_dim = 100
     embed_dim = 100
-    num_layers = 1
+
+    kv_size = 1000
+    input_channels = [1]
+    output_channels = [hidden_dim]
+    kernel_size = [3]
     
     LR = 0.01
     MOMENTUM=0.1

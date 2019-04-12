@@ -130,7 +130,7 @@ if __name__ == '__main__':
 
                    len(dataset.input_vocab),
                    len(dataset.output_vocab),
-                   1000, #kv_size
+                   config.HPCONFIG.kv_size, #kv_size
                    
                    dataset.input_vocab['SOW'],
                    loss_function = loss_,

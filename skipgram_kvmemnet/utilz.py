@@ -210,7 +210,7 @@ def batchop(datapoints, VOCAB, config, *args, **kwargs):
         word.append   ([VOCAB[i] for i in tamil.utf8.get_letters(   d.word)])
         context.append([VOCAB[i] for i in tamil.utf8.get_letters(d.context)])
 
-    word    = LongVar(config, pad_seq(   word)).transpose(0, 1)
+    word    = LongVar(config, pad_seq(   word))
     context = LongVar(config, pad_seq(context)).transpose(0, 1)
     
     batch = indices, word, context
