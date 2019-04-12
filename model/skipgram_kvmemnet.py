@@ -85,7 +85,8 @@ class Model(Base):
     def __init__(self, config, name,
                  input_vocab_size,
                  output_vocab_size,
-
+                 kv_size,
+                 
                  # sos_token
                  sos_token,
                  
@@ -109,16 +110,19 @@ class Model(Base):
         
         super(Model, self).__init__(config, name)
         self.vocab_size = input_vocab_size
+        self.kv_size  = kv_size
         self.hidden_dim = config.HPCONFIG.hidden_dim
         self.embed_dim = config.HPCONFIG.embed_dim
-
+        
+        
         self.sos_token = LongVar(self.config, torch.Tensor([sos_token]))
 
+        self.keys   = nn.Parameter(torch.rand([self.kv_size, self.hidden_dim]))
+        self.values = nn.Parameter(torch.rand([self.kv_size, self.hidden_dim]))
+        
         self.encode = Encoder(self.config, name + '.encoder' , input_vocab_size)
         self.decode = Decoder(self.config, name + '.decoder', input_vocab_size, output_vocab_size)
 
-
-        
         self.loss_function = loss_function if loss_function else nn.NLLLoss()
         self.f1score_function = f1score_function
         
@@ -176,8 +180,22 @@ class Model(Base):
 
                 loss = 0
                 encoded_info = self.__(self.encode(word), 'encoded_info')
+
+                keys = self.__( self.keys.transpose(0, 1), 'keys')
+                keys = self.__( keys.expand([encoded_info.size(1), *keys.size()]), 'keys')
+                inner_product = self.__(torch.bmm(encoded_info[-1].unsqueeze(1),  #final state
+                                                  keys),
+                                        'inner_product')
+
+
+                values = self.__( self.values, 'values')
+                values = self.__( values.expand([inner_product.size(0), *values.size()]), 'values')
+
+                weighted_sum = self.__( torch.bmm(inner_product, values), 'weighted_sum')
+                weighted_sum = self.__( weighted_sum.squeeze(1), 'weighted_sum')
+                
                 state = self.__(self.init_hidden(targets.size(1)), 'init-hidden')
-                state = self.__( (encoded_info[-1], state[1].squeeze(0)), 'decoder initial state')
+                state = self.__( (weighted_sum, state[1].squeeze(0)), 'decoder initial state')
                 prev_output = self.__(self.sos_token.expand([encoded_info.size(1)]),
                                       'sos_token')
                 

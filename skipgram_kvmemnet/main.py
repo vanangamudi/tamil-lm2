@@ -127,8 +127,11 @@ if __name__ == '__main__':
     test_feed      = DataFeed(SELF_NAME, dataset.testset, batchop=_batchop, batch_size=config.CONFIG.batch_size)
     
     model =  Model(config, 'Model',
+
                    len(dataset.input_vocab),
                    len(dataset.output_vocab),
+                   1000, #kv_size
+                   
                    dataset.input_vocab['SOW'],
                    loss_function = loss_,
                    dataset = dataset,
