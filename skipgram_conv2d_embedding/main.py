@@ -150,14 +150,36 @@ if __name__ == '__main__':
         
     if args.task == 'dump-vocab':
         ids = torch.arange(model.vocab_size)
-        embedding = model.__(model.embed(ids.cuda()), 'emb')
+
+        embedding = model.__(model.embed(ids.cuda().long()), 'emb')
         
         dump_vocab_tsv(config,
                        dataset.input_vocab,
                        embedding.cpu().detach().numpy(),
                        config.ROOT_DIR + '/vocab.tsv')
 
+        embedding_matrix = torch.stack([i.weight for i in model.embed._embed])
 
+        # rowwise
+        embedding_matrix = embedding_matrix.permute(1, 0, 2)
+        print(embedding_matrix.size())
+        vocab_size, N, _ = embedding_matrix.size()
+        for i in range(N):
+            dump_vocab_tsv(config,
+                           dataset.input_vocab,
+                           embedding_matrix[:, i, :].cpu().detach().numpy(),
+                           config.ROOT_DIR + '/vocab.rowwise.{:02d}.tsv'.format(i))
+
+        # columnwise
+        embedding_matrix = embedding_matrix.permute(0, 2, 1)
+        print(embedding_matrix.size())
+        vocab_size, N, _ = embedding_matrix.size()
+        for i in range(N):
+            dump_vocab_tsv(config,
+                           dataset.input_vocab,
+                           embedding_matrix[:, i, :].cpu().detach().numpy(),
+                           config.ROOT_DIR + '/vocab.colwise.{:02d}.tsv'.format(i))
+        
     if args.task == 'dump-cosine-similarity':
         dump_cosine_similarity_tsv(config,
                    dataset.input_vocab,

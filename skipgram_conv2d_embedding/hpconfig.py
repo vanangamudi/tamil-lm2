@@ -16,7 +16,7 @@ class CONFIG(Base):
     freq_threshold = 100
     trainset_size = 1
     hidden_dim = 100
-    embed_dim = 10
+    embed_dim = 12
     num_layers = 1
     
     LR = 0.01
