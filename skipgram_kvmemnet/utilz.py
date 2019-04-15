@@ -84,8 +84,9 @@ def load_data(config,
         log.info('building input_vocabulary...')
         sentences = set()
         for i, l in tqdm(enumerate(text_file[:config.HPCONFIG.max_samples]),
-                            desc='processing {}'.format(filename)):
+                         desc='processing {}'.format(filename)):
 
+            _, l = l.split('|', 1)
             sentence = remove_punct_symbols(l)
             sentence = sentence.strip().split()
             if len(sentence):
@@ -201,18 +202,24 @@ def waccuracy(output, batch, config, *args, **kwargs):
     return accuracy.mean()
 
 
-def batchop(datapoints, VOCAB, config, *args, **kwargs):
+def batchop(datapoints, VOCAB, config, for_prediction=False, *args, **kwargs):
     indices = [d.id for d in datapoints]
     word = []
     context = []
     
     for d in datapoints:
         word.append   ([VOCAB[i] for i in tamil.utf8.get_letters(   d.word)])
-        context.append([VOCAB[i] for i in tamil.utf8.get_letters(d.context)])
+
+        if not for_prediction:
+            context.append([VOCAB[i] for i in tamil.utf8.get_letters(d.context)])
 
     word    = LongVar(config, pad_seq(   word))
-    context = LongVar(config, pad_seq(context)).transpose(0, 1)
-    
-    batch = indices, word, context
+
+    if not for_prediction:
+        context = LongVar(config, pad_seq(context)).transpose(0, 1)
+        batch = indices, word, context
+    else:
+        batch = indices, word, ()
+        
     return batch
 
