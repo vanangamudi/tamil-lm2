@@ -200,9 +200,29 @@ class Model(Base):
             cell_state   = cell_state.cuda()
 
         return hidden_state, cell_state
+
+    def embed(self, word):
+        encoded_info = self.__(self.encode(word), 'encoded_info')
+
+        keys = self.__( self.keys.transpose(0, 1), 'keys')
+        keys = self.__( keys.expand([encoded_info.size(0), *keys.size()]), 'keys')
+        inner_product = self.__(torch.bmm(encoded_info.unsqueeze(1),  #final state
+                                          keys),
+                                'inner_product')
         
+        
+        values = self.__( self.values, 'values')
+        values = self.__( values.expand([inner_product.size(0), *values.size()]), 'values')
+        
+        weighted_sum = self.__( torch.bmm(inner_product, values), 'weighted_sum')
+        weighted_sum = self.__( weighted_sum.squeeze(1), 'weighted_sum')
+
+        return weighted_sum
+    
+    @profile
     def do_train(self):
         for epoch in range(self.epochs):
+
             self.log.critical('memory consumed : {}'.format(memory_consumed()))            
             self.epoch = epoch
             if epoch and epoch % max(1, (self.checkpoint - 1)) == 0:
@@ -213,7 +233,8 @@ class Model(Base):
                            
             self.train()
             losses = []
-            for j in tqdm(range(self.train_feed.num_batch), desc='Trainer.{}'.format(self.name())):
+            tracemalloc.start()
+            for j in tqdm(range(self.train_feed.num_batch//10), desc='Trainer.{}'.format(self.name())):
                 self.optimizer.zero_grad()
                 input_ = self.train_feed.next_batch()
                 idxs, word, targets = input_
@@ -227,15 +248,16 @@ class Model(Base):
                                                   keys),
                                         'inner_product')
 
-
                 values = self.__( self.values, 'values')
                 values = self.__( values.expand([inner_product.size(0), *values.size()]), 'values')
 
                 weighted_sum = self.__( torch.bmm(inner_product, values), 'weighted_sum')
                 weighted_sum = self.__( weighted_sum.squeeze(1), 'weighted_sum')
-                
+
                 state = self.__(self.init_hidden(targets.size(1)), 'init-hidden')
+                
                 state = self.__( (weighted_sum, state[1].squeeze(0)), 'decoder initial state')
+                #state = self.__( (encoded_info, state[1].squeeze(0)), 'decoder initial state')
                 prev_output = self.__(self.sos_token.expand([encoded_info.size(0)]),
                                       'sos_token')
                 
