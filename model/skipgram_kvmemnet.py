@@ -234,7 +234,7 @@ class Model(Base):
             self.train()
             losses = []
             tracemalloc.start()
-            for j in tqdm(range(self.train_feed.num_batch//10), desc='Trainer.{}'.format(self.name())):
+            for j in tqdm(range(self.train_feed.num_batch), desc='Trainer.{}'.format(self.name())):
                 self.optimizer.zero_grad()
                 input_ = self.train_feed.next_batch()
                 idxs, word, targets = input_
