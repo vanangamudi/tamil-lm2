@@ -26,8 +26,12 @@ from torch.autograd import Variable
 
 from anikattu.utilz import Var, LongVar, init_hidden, Averager, FLAGS, tqdm
 from anikattu.debug import memory_consumed
+from anikattu.debug import tracemalloc, display_tracemalloc_top
 from anikattu.utilz import tqdm, ListTable, dump_vocab_tsv
+
 from .model import Base
+
+from memory_profiler import profile
 
 class Encoder(Base):
     def __init__(self, config, name,
@@ -243,6 +247,12 @@ class Model(Base):
                 losses.append(loss)
                 loss.backward()
                 self.optimizer.step()
+
+                del input_#, keys, values
+                
+                if not j % 1000:
+                    malloc_snap = tracemalloc.take_snapshot()
+                    display_tracemalloc_top(malloc_snap, limit=100)
 
             epoch_loss = torch.stack(losses).mean()
             self.train_loss.append(epoch_loss.data.item())
