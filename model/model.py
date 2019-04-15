@@ -47,7 +47,8 @@ class Base(nn.Module):
             for i in range(len(tensor)):
                 self.__(tensor[i], '{}[{}]'.format(name, i))
         else:
-            self.size_log.debug('{} -> {}'.format(name, tensor.size()))
+            size = tensor.size()
+            self.size_log.debug('{} -> {}'.format(name, size))
             if self.print_instance or print_instance:
                 self.size_log.debug(tensor)
 

@@ -78,16 +78,6 @@ class ConvEncoder(Base):
                                   
                                   self.config.HPCONFIG.kernel_size[0],
                                   padding = 1)
-
-    def init_hidden(self, batch_size):
-        hidden_state = Var(self.config, torch.zeros(1, batch_size, self.hidden_dim))
-        cell_state   = Var(self.config, torch.zeros(1, batch_size, self.hidden_dim))
-
-        if self.config.CONFIG.cuda:
-            hidden_state = hidden_state.cuda()
-            cell_state   = cell_state.cuda()
-
-        return hidden_state, cell_state
         
     def forward(self, prev_char):
         emb = self.__( self.embed(prev_char).transpose(1, 2), 'emb' )
@@ -193,13 +183,11 @@ class Model(Base):
 
     def init_hidden(self, batch_size):
         hidden_state = Var(self.config, torch.zeros(1, batch_size, self.hidden_dim))
-        cell_state   = Var(self.config, torch.zeros(1, batch_size, self.hidden_dim))
 
         if self.config.CONFIG.cuda:
             hidden_state = hidden_state.cuda()
-            cell_state   = cell_state.cuda()
 
-        return hidden_state, cell_state
+        return hidden_state
 
     def embed(self, word):
         encoded_info = self.__(self.encode(word), 'encoded_info')
@@ -254,9 +242,9 @@ class Model(Base):
                 weighted_sum = self.__( torch.bmm(inner_product, values), 'weighted_sum')
                 weighted_sum = self.__( weighted_sum.squeeze(1), 'weighted_sum')
 
-                state = self.__(self.init_hidden(targets.size(1)), 'init-hidden')
-                
-                state = self.__( (weighted_sum, state[1].squeeze(0)), 'decoder initial state')
+                #make the same chane in do_[predict|validate]
+                tseq_len, batch_size = targets.size()
+                state = self.__( (weighted_sum, self.init_hidden(batch_size).squeeze(0)), 'decoder initial state')
                 #state = self.__( (encoded_info, state[1].squeeze(0)), 'decoder initial state')
                 prev_output = self.__(self.sos_token.expand([encoded_info.size(0)]),
                                       'sos_token')
@@ -272,7 +260,7 @@ class Model(Base):
 
                 del input_#, keys, values
                 
-                if not j % 1000:
+                if  j and  not j % 100000:
                     malloc_snap = tracemalloc.take_snapshot()
                     display_tracemalloc_top(malloc_snap, limit=100)
 
@@ -284,7 +272,7 @@ class Model(Base):
                 m.write_to_file()
 
         return True
-
+    
     def do_validate(self):
         self.eval()
         if self.test_feed.num_batch > 0:
