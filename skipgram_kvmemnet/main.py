@@ -153,12 +153,26 @@ if __name__ == '__main__':
         model.do_train()
         
     if args.task == 'dump-vocab':
+        from collections import Counter
+        from utilz import Sample
+        counter = Counter()
+        for s in dataset.trainset:
+            counter.update([s.word, s.context])
+
+        embedding = []
+        words = sorted(counter.keys())
+        for w in tqdm(words):
+            ids, word, context = _batchop([Sample('0', w, '')], for_prediction=True)
+            emb = model.__(model.embed(word), 'emb')
+            embedding.append(emb)
+
+        embedding = torch.stack(embedding).squeeze()
         dump_vocab_tsv(config,
-                   dataset.input_vocab,
-                   model.embed.weight.data.cpu().numpy(),
-                   config.ROOT_DIR + '/vocab.tsv')
+                       words,
+                       embedding.cpu().detach().numpy(),
+                       config.ROOT_DIR + '/vocab.tsv')
 
-
+        
     if args.task == 'dump-cosine-similarity':
         dump_cosine_similarity_tsv(config,
                    dataset.input_vocab,
