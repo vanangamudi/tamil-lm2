@@ -179,11 +179,11 @@ class Model(Base):
         self.__build_stats__()
                         
         self.best_model_criteria = self.train_loss
-
+        self.best_model = (100000, self.cpu().state_dict())
         
         self.optimizer = optimizer if optimizer else optim.SGD(self.parameters(),
                                                                lr=1, momentum=0.1)
-        #self.optimizer = optimizer if optimizer else optim.Adam(self.parameters())        
+        self.optimizer = optimizer if optimizer else optim.Adam(self.parameters())        
         if config.CONFIG.cuda:
             self.cuda()
         
