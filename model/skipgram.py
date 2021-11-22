@@ -112,12 +112,15 @@ class Model(Base):
                 output = self.__(self.forward(word), 'output')
                 loss   = self.loss_function(output, targets)
                     
-                losses.append(loss)
+                losses.append(loss.item())
                 loss.backward()
                 self.optimizer.step()
 
-            epoch_loss = torch.stack(losses).mean()
-            self.train_loss.append(epoch_loss.data.item())
+                del input_
+
+                
+            epoch_loss = sum(losses) / len(losses)
+            self.train_loss.append(epoch_loss)
 
             self.log.info('-- {} -- loss: {}\n'.format(epoch, epoch_loss))
             for m in self.metrics:
@@ -148,16 +151,18 @@ class Model(Base):
             losses = []
             for input_ in tqdm(self.batch_cache, desc='Trainer.{}'.format(self.name())):
                 self.optimizer.zero_grad()
-                idxs, word, targets = input_
+                word, targets = input_
                 output = self.__(self.forward(word), 'output')
                 loss   = self.loss_function(output, targets)
                     
-                losses.append(loss)
+                losses.append(loss.item())
                 loss.backward()
                 self.optimizer.step()
 
-            epoch_loss = torch.stack(losses).mean()
-            self.train_loss.append(epoch_loss.data.item())
+                del input_
+                
+            epoch_loss = sum(losses) / len(losses)
+            self.train_loss.append(epoch_loss)
 
             self.log.info('-- {} -- loss: {}\n'.format(epoch, epoch_loss))
             for m in self.metrics:
@@ -176,11 +181,12 @@ class Model(Base):
                 output = self.__(self.forward(word), 'output')
                 loss   = self.loss_function(output, targets)
                 
-                losses.append(loss)
+                losses.append(loss.item())
+                del input_
+                
+            epoch_loss = sum(losses) / len(losses)
 
-            epoch_loss = torch.stack(losses).mean()
-
-            self.test_loss.append(epoch_loss.data.item())
+            self.test_loss.append(epoch_loss)
 
             self.log.info('= {} =loss:{}'.format(self.epoch, epoch_loss))
             
@@ -223,5 +229,7 @@ class Model(Base):
               ' ==? ',
               self.dataset.output_vocab[label.data[0]] )
         
+        del input_
+
         return True
 
