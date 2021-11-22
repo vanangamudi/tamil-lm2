@@ -2,7 +2,7 @@ import logging
 from hpconfig import CONFIG as HPCONFIG
 
 #FORMAT_STRING = "%(levelname)-8s:%(name)s.%(funcName)s>> %(message)s"
-FORMAT_STRING = "%(levelname)-8s:%(name)-8s.%(funcName)-8ss>> %(message)s"
+FORMAT_STRING = "%(levelname)-8s:%(name)-8s.%(funcName)-8s>> %(message)s"
 
 class ConfigMeta(type):
     def __getattr__(cls, attr):
@@ -18,10 +18,10 @@ class CONFIG(Base):
     multi_gpu = False
     tqdm = True
     flush = True
-    batch_size = 1000
+    batch_size = 2000
     plot_metrics = False
 
-    write_vocab_to_file = False
+    write_vocab_to_file = True
     dump_bloom_filter = False
     
     CHECKPOINT = 1
@@ -29,6 +29,8 @@ class CONFIG(Base):
     EONS=2
     ACCURACY_THRESHOLD=0.9
     ACCURACY_IMPROVEMENT_THRESHOLD=0.05
+
+    DEBUG = False
     
     class LOG(Base):
         class _default(Base):

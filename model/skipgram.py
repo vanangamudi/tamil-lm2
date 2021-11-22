@@ -108,7 +108,7 @@ class Model(Base):
             for j in tqdm(range(self.train_feed.num_batch), desc='Trainer.{}'.format(self.name())):
                 self.optimizer.zero_grad()
                 input_ = self.train_feed.next_batch()
-                idxs, word, targets = input_
+                word, targets = input_
                 output = self.__(self.forward(word), 'output')
                 loss   = self.loss_function(output, targets)
                     
@@ -172,7 +172,7 @@ class Model(Base):
             losses, accuracies = [], []
             for j in tqdm(range(self.test_feed.num_batch), desc='Tester.{}'.format(self.name())):
                 input_ = self.test_feed.next_batch()
-                idxs, word, targets = input_
+                word, targets = input_
                 output = self.__(self.forward(word), 'output')
                 loss   = self.loss_function(output, targets)
                 
@@ -217,7 +217,7 @@ class Model(Base):
         output = output.max(1)[1].long()
         print(output.size())
 
-        ids, (sequence, ), (label) = input_
+        (sequence, ), (label) = input_
         print(' '.join([self.dataset.input_vocab[i.data[0]] for i in sequence[0]]).replace('@@ ', ''))
         print(self.dataset.output_vocab[output.data[0]],
               ' ==? ',

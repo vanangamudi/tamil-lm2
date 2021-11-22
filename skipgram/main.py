@@ -24,22 +24,14 @@ import torch
 from anikattu.utilz import initialize_task
 
 from model.skipgram import Model as Model
-from utilz import load_data, batchop, loss, accuracy, waccuracy
+from utilz import load_data, batchop, loss, accuracy
 
 from functools import partial
 
-
-from anikattu.tokenizer import word_tokenize
-from anikattu.tokenstring import TokenString
-from anikattu.datafeed import DataFeed, MultiplexedDataFeed
-from anikattu.dataset import NLPDataset as Dataset, NLPDatasetList as DatasetList
+from anikattu.datafeed import DataFeed
+from anikattu.dataset import Dataset
 from anikattu.utilz import tqdm, ListTable, dump_vocab_tsv, dump_cosine_similarity_tsv
 from anikattu.vocab import Vocab
-from anikattu.utilz import Var, LongVar, init_hidden, pad_seq
-from nltk.tokenize import WordPunctTokenizer
-word_punct_tokenizer = WordPunctTokenizer()
-word_tokenize = word_punct_tokenizer.tokenize
-
 
 import importlib
 
@@ -102,29 +94,24 @@ if __name__ == '__main__':
         
     if config.CONFIG.flush:
         log.info('flushing...')
-        dataset = load_data(config, filename=config.HPCONFIG.dataset_path)
+        dataset = load_data(config, config.HPCONFIG.dataset_path, '\t')
         #pickle.dump(dataset, open('{}/{}__cache.pkl'.format(ROOT_DIR, SELF_NAME), 'wb'))
     else:
         dataset = pickle.load(open('{}/{}__cache.pkl'.format(ROOT_DIR, SELF_NAME), 'rb'))
 
         
-    log.info('dataset size: {}'.format(len(dataset.trainset)))
-    for i in range(10):
-        log.info('random sample: {}'.format(pformat(random.choice(dataset.trainset))))
-
     #log.info('vocab: {}'.format(pformat(dataset.output_vocab.freq_dict)))
     ########################################################################################
     # load model snapshot data 
     ########################################################################################
-    _batchop = partial(batchop, VOCAB=dataset.input_vocab, LABELS=dataset.output_vocab, config=config)
+    _batchop = partial(batchop, config=config)
     train_feed     = DataFeed(SELF_NAME,
-                              dataset.trainset,
+                              dataset,
                               batchop    = _batchop,
                               batch_size = config.CONFIG.batch_size)
     
     
     loss_ = partial(loss, loss_function=nn.NLLLoss())
-    test_feed      = DataFeed(SELF_NAME, dataset.testset, batchop=_batchop, batch_size=config.CONFIG.batch_size)
     
     model =  Model(config, 'Model',
                    len(dataset.input_vocab),
@@ -132,7 +119,7 @@ if __name__ == '__main__':
                    loss_function = loss_,
                    dataset = dataset,
                    train_feed = train_feed,
-                   test_feed = test_feed,)
+                   test_feed = train_feed,)
     
     print('**** the model', model)
     model.restore_checkpoint()

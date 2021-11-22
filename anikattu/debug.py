@@ -5,7 +5,7 @@ import tracemalloc
 process = psutil.Process(os.getpid())
 
 def memory_consumed():
-    return process.memory_info().rss
+    return process.memory_info().rss 
 
 def display_tracemalloc_top(snapshot, key_type='lineno', limit=3):
     """
