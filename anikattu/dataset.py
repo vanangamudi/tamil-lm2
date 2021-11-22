@@ -22,42 +22,49 @@ def split_dataset(dataset, ratio=0.8):
 
 
 class Dataset:
-    def __init__(self, name, dataset_path, line_pos, delim, vocab):
+    def __init__(self, name, dataset_path, delim, vocab):
 
         self.name = name
         log.info('building dataset: {}'.format(name))
 
-        self.dataest_path = dataset_path
-        dataset_file = open(dataset_path)
-        self.dataset_file = mmap.mmap(dataset_file.fileno(),
+        self.dataset_path = dataset_path
+        self.dataset_file = open(dataset_path)
+        self.dataset_mmap = mmap.mmap(self.dataset_file.fileno(),
                                       length=0,
                                       access=mmap.ACCESS_READ)
-        self.line_pos = line_pos[:1000]
+
         self.delim = delim
 
+        self.dataset_size = 0
+        with open(dataset_path) as f:
+            for line in tqdm(f, desc='counting lines'):
+                self.dataset_size += 1
         
         self.input_vocab = self.output_vocab = vocab
 
     def __len__(self):
-        return len(self.line_pos)
+        return self.dataset_size
         
     def __getitem__( self, key ) :
         if isinstance( key, slice ) :
             inputs, outputs = [], []
-            self.dataset_file.seek( self.line_pos[key.start] )
             for i in range(key.start, key.stop):
-                line = self.dataset_file.readline()
-                
-                input_, output = line.split(self.delim)
+                line = self.dataset_mmap.readline()
+
+                if not line:
+                    self.dataset_mmap.seek(0)
+                    line = self.dataset_mmap.readline()
+                    
+                input_, output = line.decode().split(self.delim)
                 input_, output = int(input_), int(output)
                 inputs.append(input_)
                 outputs.append(output)
+                
             return inputs, outputs
         
         elif isinstance( key, int ) :
-            self.dataset_file.seek( self.line_pos[key] )
-            line = self.dataset_file.readline()
-            input_, output = line.split(self.delim)
+            line = self.dataset_mmap.readline()
+            input_, output = line.decode().split(self.delim)
             input_, output = int(input_), int(output)
 
             return input_, output
