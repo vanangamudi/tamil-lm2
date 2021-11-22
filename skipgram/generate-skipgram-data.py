@@ -2,12 +2,13 @@ import os
 import re
 import sys
 import glob
+import time
 import argparse
 from pprint import pprint, pformat
 
 import logging
 from pprint import pprint, pformat
-logging.basicConfig(format="%(levelname)-8s:%(filename)s.%(funcName)20s >>   %(message)s")
+logging.basicConfig(format="%(levelname)s:%(filename)s.%(funcName)s >>   %(message)s")
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
@@ -105,32 +106,22 @@ def find_line_seek_positions(filepath):
     
     return line_pos
     
-def process_file_chunk(args, filepath, vocab, dataset_output_file, bpos, epos):
+def process_file_chunk(args, filepath, vocab, dataset_output_file):
     
     dataset_output_file = open(dataset_output_file, 'w')
     text_file = open(filepath)
-    text_file.seek(bpos)
     bloom_filter = BloomFilter(max_elements=10000000, error_rate=0.1)
     
-    i = 0
-    sentence = text_file.readline()
-    pbar = tqdm(total=epos-bpos)
-    while sentence:        
-        i += 1
+    for i, sentence in enumerate(tqdm(text_file)):
         if i % 10000000 == 0:
             print_memory()
             
-        if text_file.tell() >= epos:
-            break
-
         log.debug('sentence :'.format(sentence))
-        pbar.update(text_file.tell() - bpos)
         sentence = remove_punct_symbols(sentence)
         sentence = sentence.strip().split()
 
         if len(sentence) < 2:
             log.debug('sentence length < 2, {}'.format(' '.join(sentence)))
-            sentence = text_file.readline()
             continue
 
         unk_ratio = float(count_UNKS(sentence, vocab))/len(sentence)
@@ -143,7 +134,6 @@ def process_file_chunk(args, filepath, vocab, dataset_output_file, bpos, epos):
 
         if unk_ratio > 0.7:
             log.debug('unk ratio is heavy: {}'.format(unk_ratio))
-            sentence = text_file.readline()
             continue
 
         for center_word_pos, center_word in enumerate(sentence):
@@ -175,71 +165,32 @@ def process_file_chunk(args, filepath, vocab, dataset_output_file, bpos, epos):
 
                     bloom_filter.add(pair)
 
-        sentence = text_file.readline()
-        
-def load_data(args):
-    
+def load_data(args, input_):
+    start_time = time.time()
     samples = []
     skipped = 0
     
     input_vocab = Counter()
 
-    
     try:
-        log.info('processing file: {}'.format(args.input_))
+        log.info('processing file: {}'.format(input_))
         
-        vocab = load_vocab(args, 100, args.input_)
-        text_file = open(args.input_)
+        vocab = load_vocab(args, 100, input_)
         UNK = vocab['UNK']
 
-        line_pos_file = args.output_dir + '/line_pos.pkl'
-        if os.path.exists(line_pos_file):
-            line_pos = pickle.load(open(line_pos_file, 'rb'))
-        else:
-            line_pos = find_line_seek_positions(args.input_)
-            pickle.dump(line_pos, open(line_pos_file, 'wb'))
-                
-        log.info('number of lines in input: {}'.format(len(line_pos)))
-        log.info('number of lines in input: {}'.format(line_pos[:100]))
-
-        """
         process_file_chunk(args,
-                           args.input_,
+                           input_,
                            vocab,
-                           args.output_pattern.format(0),
-                           0,
-                           100000,)
-        """
-        
-        results = []
-        pool = mp.Pool(processes=2)
-        for i, bpos in enumerate(range(0, len(line_pos), args.chunk_size)):
-
-
-            bpos = line_pos[bpos]
-            if bpos + args.chunk_size > len(line_pos):
-                epos = line_pos[-1]
-            else:
-                epos = line_pos[bpos + args.chunk_size]
+                           args.output_pattern.format(input_),
+                           )
                 
-            log.info('processing from {} to {}'.format(bpos, epos))
-            
-            results.append(pool.apply_async(
-                process_file_chunk,
-                args=(args,
-                      args.input_,
-                      vocab,
-                      args.output_pattern.format(i),
-                      bpos,
-                      epos,)
-            ))
-
-        output = [p.get() for p in results]
-        print(output)
 
     except:
         log.exception('===')
-
+        
+    end_time = time.time()
+    print('time elapsed: ', end_time - start_time)
+    
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='SkipGram model for training tamil language model')
@@ -260,12 +211,20 @@ if __name__ == '__main__':
                         help='path pattern to the output files',
                         dest='window_size')
 
-    parser.add_argument('-c','--chunk_size',
-                        type=int,
-                        help='path pattern to the output files',
-                        dest='chunk_size')
     args = parser.parse_args()
     print(args)
 
     os.makedirs(os.path.dirname(args.output_pattern), exist_ok=True)
-    load_data(args)
+
+    results = []
+    pool = mp.Pool(processes=12)
+    for input_ in sorted(glob.glob(args.input_)):
+        log.info('processing {}'.format(input_))
+        results.append(pool.apply_async(
+            load_data,
+            args=(args,
+                  input_,)
+        ))
+
+    output = [p.get() for p in results]
+    print(output)
