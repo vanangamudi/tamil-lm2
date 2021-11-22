@@ -69,6 +69,9 @@ class DataFeed(object):
             return self.batch(apply_batchop=apply_batchop)
         except SystemExit:
             exit(1)
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+
         except:
             log.exception('batch failed')
             return self.next_batch(apply_batchop=apply_batchop)
