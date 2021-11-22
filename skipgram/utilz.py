@@ -120,21 +120,7 @@ def load_data(config,
     
     log.info('processing file: {}'.format(filepath))
 
-    line_pos_path = config.ROOT_DIR + '/line_pos.pkl'
-    if os.path.exists(line_pos_path):
-        log.info('loading line_pos from pickle: {}'.format(line_pos_path))
-        line_pos = pickle.load(open(line_pos_path, 'rb'))
-    else:
-        line_pos = []
-        file_pos = 0
-        line_pos.append(file_pos)
-        with open(filepath, 'rb') as f:
-            for line in tqdm(f, desc='reading line positions from {}'.format(filepath)):
-                file_pos += len(line)
-                line_pos.append(file_pos)
-        pickle.dump(line_pos, open(line_pos_path, 'wb'))
-        
-    return Dataset(filepath, filepath, line_pos, delim, vocab)
+    return Dataset(filepath, filepath, delim, vocab)
 
 # ## Loss and accuracy function
 def loss(output, targets, loss_function, *args, **kwargs):
