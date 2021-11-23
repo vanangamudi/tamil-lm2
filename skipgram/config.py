@@ -18,7 +18,7 @@ class CONFIG(Base):
     multi_gpu = False
     tqdm = True
     flush = True
-    batch_size = 2000
+    batch_size = 800
     plot_metrics = False
 
     write_vocab_to_file = True

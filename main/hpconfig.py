@@ -11,7 +11,7 @@ class CONFIG(Base):
 
     dataset = 'news'
     
-    dataset_path = '../dataset/lm_lengthsorted.txt'
+    dataset_path = '../../tharavu/cholloadai-2021.txt'
     max_samples = 1000000000
     trainset_size = 1
     hidden_dim = 100
