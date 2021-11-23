@@ -63,19 +63,19 @@ class Vocab:
         
         self.index2word += words
 
-    def write_to_file(self, filepath):
-        lines = ['{}|{}'.format(k, v) for k, v in self.freq_dict.items()]
+    def write_to_file(self, filepath, delim='|'):
+        lines = ['{}{}{}'.format(k, delim, v) for k, v in self.freq_dict.items()]
         with open(filepath + '.freq_dict.csv', 'w') as f:
             f.write('\n'.join(lines))
 
         with open(filepath + '.index2word.csv', 'w') as f:
             f.write('\n'.join(self.index2word))
 
-    def load_from_file(self, filepath):
+    def load_from_file(self, filepath, delim='|'):
         self.freq_dict = {}
         with open(filepath + '.freq_dict.csv') as f:
             for line in f.readlines():
-                word, freq = line.strip().split('|')
+                word, freq = line.strip().split(delim)
                 self.freq_dict[word] = int(freq)
 
         with open(filepath + '.index2word.csv') as f:
