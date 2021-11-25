@@ -22,7 +22,7 @@ def split_dataset(dataset, ratio=0.8):
 
 
 class Dataset:
-    def __init__(self, name, dataset_path, delim, vocab):
+    def __init__(self, name, dataset_path, dataset_size, delim, vocab):
 
         self.name = name
         log.info('building dataset: {}'.format(name))
@@ -35,10 +35,7 @@ class Dataset:
 
         self.delim = delim
 
-        self.dataset_size = 0
-        with open(dataset_path) as f:
-            for line in tqdm(f, desc='counting lines'):
-                self.dataset_size += 1
+        self.dataset_size = dataset_size
         
         self.input_vocab = self.output_vocab = vocab
 
