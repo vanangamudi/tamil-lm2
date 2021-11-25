@@ -104,19 +104,40 @@ class Model(Base):
                     return
                            
             self.train()
-            losses = []
-            for j in tqdm(range(self.train_feed.num_batch), desc='Trainer.{}'.format(self.name())):
-                self.optimizer.zero_grad()
-                input_ = self.train_feed.next_batch()
-                word, targets = input_
-                output = self.__(self.forward(word), 'output')
-                loss   = self.loss_function(output, targets)
-                    
-                losses.append(loss.item())
-                loss.backward()
-                self.optimizer.step()
+            with tqdm(range(self.train_feed.num_batch), desc='Trainer.{}'.format(self.name())) as tbar:
+                losses = [0]
+                prev_checkpint_loss = 1e4
+                for j in tbar:
+                    self.optimizer.zero_grad()
+                    input_ = self.train_feed.next_batch()
+                    word, targets = input_
+                    output = self.__(self.forward(word), 'output')
+                    loss   = self.loss_function(output, targets)
 
-                del input_
+                    losses.append(loss.item())
+                    loss.backward()
+                    self.optimizer.step()
+
+                    del input_
+                    tbar.set_description('epoch: {}, batch: {}, loss: {} '.format(epoch, j, losses[-1]))
+                    # for cholloadai-2021.txt half a million epochs too long to wait
+                    # power cuts distrupts training a lot. lets not wait that long eh?
+                    if j and j % (self.checkpoint * 10) == 0:
+                        log.info('epoch: {}, batch: {}, loss: {} '.format(epoch, j, losses[-1]))
+                        self.best_model = (losses[-1],
+                                           self.cpu().state_dict())                             
+
+                        self.save_best_model()
+                        self.cuda()
+                        
+                    if j and j % self.checkpoint == 0 and losses[-1] < prev_checkpint_loss:
+                        prev_checkpint_loss = losses[-1]
+                        log.info('epoch: {}, batch: {}, loss: {} '.format(epoch, j, losses[-1]))
+                        torch.save(self.state_dict(),
+                                   '{}/weights/e10c-{}.{}'.format(self.config.ROOT_DIR,
+                                                                  self.name(),
+                                                                  'pth'))
+                        
 
                 
             epoch_loss = sum(losses) / len(losses)
