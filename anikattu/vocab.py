@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 class Vocab:
     def __init__(self, vocab, special_tokens=[],
-                 max_size=None, sort=True, sort_key=None,
+                 max_size=None, sort=False, sort_key=None,
                  freq_threshold=1, tokens=None):
 
         log.info('Constructiong vocabuluary object...')
