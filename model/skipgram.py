@@ -134,43 +134,6 @@ class Model(Base):
             input_ = self.train_feed.next_batch()
             self.batch_cache.append(input_)
     
-    def do_train2(self):
-        if not hasattr(self, 'batch_cache'):
-            self.build_cache_for_train2()
-        
-        for epoch in range(self.epochs):
-            self.log.critical('memory consumed : {}'.format(memory_consumed()))            
-            self.epoch = epoch
-            if epoch and epoch % max(1, (self.checkpoint - 1)) == 0:
-                #self.do_predict()
-                if self.do_validate() == FLAGS.STOP_TRAINING:
-                    self.log.info('loss trend suggests to stop training')
-                    return
-                           
-            self.train()
-            losses = []
-            for input_ in tqdm(self.batch_cache, desc='Trainer.{}'.format(self.name())):
-                self.optimizer.zero_grad()
-                word, targets = input_
-                output = self.__(self.forward(word), 'output')
-                loss   = self.loss_function(output, targets)
-                    
-                losses.append(loss.item())
-                loss.backward()
-                self.optimizer.step()
-
-                del input_
-                
-            epoch_loss = sum(losses) / len(losses)
-            self.train_loss.append(epoch_loss)
-
-            self.log.info('-- {} -- loss: {}\n'.format(epoch, epoch_loss))
-            for m in self.metrics:
-                m.write_to_file()
-
-        return True
-
-
     def do_validate(self):
         self.eval()
         if self.test_feed.num_batch > 0:
