@@ -119,7 +119,8 @@ if __name__ == '__main__':
                    loss_function = loss_,
                    dataset = dataset,
                    train_feed = train_feed,
-                   test_feed = train_feed,)
+                   test_feed = train_feed,
+                   checkpoint = 100)
     
     print('**** the model', model)
     model.restore_checkpoint()
@@ -130,8 +131,6 @@ if __name__ == '__main__':
             print("Let's use", torch.cuda.device_count(), "GPUs!")
             model = nn.DataParallel(model)
 
-
-    
     if args.task == 'train':
         model.do_train()
         
