@@ -119,8 +119,18 @@ def load_data(config,
     vocab = load_vocab(config)
     
     log.info('processing file: {}'.format(filepath))
-
-    return Dataset(filepath, filepath, delim, vocab)
+    dataset_size = 0
+    dataset_size_path = config.ROOT_DIR + '/dataset_size.pkl'
+    if os.path.exists(dataset_size_path):
+        dataset_size = pickle.load(open(dataset_size_path, 'rb'))
+    else:
+        with open(filepath) as f:
+            for line in tqdm(f, desc='counting lines'):
+                dataset_size += 1
+        pickle.dump(dataset_size, open(dataset_size_path, 'wb'))
+                
+            
+    return Dataset(filepath, filepath, dataset_size,  delim, vocab)
 
 # ## Loss and accuracy function
 def loss(output, targets, loss_function, *args, **kwargs):
@@ -129,7 +139,6 @@ def loss(output, targets, loss_function, *args, **kwargs):
 def accuracy(output, batch, *args, **kwargs):
     indices, sequence, label = batch
     return (output.max(dim=1)[1] == label).sum().float()/float(label.size(0))
-
 
 def batchop(datapoints, config, *args, **kwargs):
     word, context = datapoints
